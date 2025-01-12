@@ -1,5 +1,6 @@
 import express from 'express';
 import PushPackage from '../models/PushPackage.js';
+import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
 
@@ -29,10 +30,27 @@ router.post('/v1/pushPackages/:websitePushId', async (req, res) => {
 });
 
 // 2. Device registration endpoint
-router.post('/v1/devices/:deviceToken/registrations/:websitePushId', (req, res) => {
-  // Store device token for later use
-  console.log('Device Token:', req.params.deviceToken);
-  res.sendStatus(200);
+router.post('/v1/devices/:deviceToken/registrations/:websitePushId', async (req, res) => {
+  try {
+    const { deviceToken } = req.params;
+    const userId = req.user?.id;
+
+    const subscription = {
+      endpoint: `https://web.push.apple.com/${deviceToken}`,
+      keys: req.body.keys
+    };
+
+    const { error } = await supabase
+      .from('users')
+      .update({ push_subscription: subscription })
+      .eq('id', userId);
+
+    if (error) throw error;
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Registration Error:', error);
+    res.sendStatus(500);
+  }
 });
 
 // 3. Device unregistration

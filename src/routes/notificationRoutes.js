@@ -16,6 +16,9 @@ router.get('/test', (req, res) => {
   res.json({ message: 'Hello World!' });
 });
 
+router.get('/vapid-key', (req, res) => {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
 
 router.post('/send', async (req, res) => {
   try {
@@ -76,7 +79,7 @@ router.post('/send', async (req, res) => {
     });
 
     // 3. Debug logs (after we have the variables)
-    console.log('Received subscription:', JSON.stringify(subscription, null, 2));
+    console.log('Received subscription:', JSON.stringify(user.web_push_subscription, null, 2));
     console.log('Received notification:', JSON.stringify(notification, null, 2));
     console.log('VAPID keys loaded:', {
         public: process.env.VAPID_PUBLIC_KEY?.slice(0, 10) + '...',
@@ -106,7 +109,7 @@ router.post('/send', async (req, res) => {
       message: error.message,
       statusCode: error?.statusCode,
       body: error?.body,
-      endpoint: req.body?.subscription?.endpoint,
+//      endpoint: req.body?.subscription?.endpoint,
       vapidPublicKeyExists: !!process.env.VAPID_PUBLIC_KEY,
       vapidPrivateKeyExists: !!process.env.VAPID_PRIVATE_KEY
     });
@@ -119,6 +122,49 @@ router.post('/send', async (req, res) => {
     });
   }
 });
+
+// Add the subscribe endpoint
+router.post('/subscribe', async (req, res) => {
+    try {
+      // Validate the request body
+      if (!req.body) {
+        return res.status(400).json({ error: 'No request body received' });
+      }
+  
+      const { userId, subscription } = req.body;
+  
+      if (!userId) {
+        return res.status(400).json({ error: 'userId is required' });
+      }
+      if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ error: 'Valid subscription is required' });
+      }
+  
+      // Store the subscription in Supabase
+      const { error } = await supabase
+        .from('users')
+        .update({ web_push_subscription: subscription })
+        .eq('did', userId);
+  
+      if (error) {
+        console.error('Failed to store subscription:', error);
+        return res.status(500).json({ error: 'Failed to store subscription' });
+      }
+  
+      console.log('Successfully stored subscription:', subscription);
+      return res.json({ success: true, message: 'Subscription saved successfully' });
+    } catch (error) {
+      console.error('Detailed Error:', {
+        message: error.message,
+        statusCode: error?.statusCode,
+      });
+  
+      return res.status(500).json({
+        error: 'Failed to save subscription',
+        details: error.message,
+      });
+    }
+  });
 
 export default router; 
 

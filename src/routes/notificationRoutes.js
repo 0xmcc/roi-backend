@@ -125,6 +125,7 @@ router.post('/send', async (req, res) => {
 
 // Add the subscribe endpoint
 router.post('/subscribe', async (req, res) => {
+    console.log('Received request:', JSON.stringify(req.body, null, 2));
     try {
       // Validate the request body
       if (!req.body) {
@@ -132,7 +133,7 @@ router.post('/subscribe', async (req, res) => {
       }
   
       const { userId, subscription } = req.body;
-  
+      console.log('Received subscription:', JSON.stringify(subscription, null, 2), 'userId:', userId);
       if (!userId) {
         return res.status(400).json({ error: 'userId is required' });
       }

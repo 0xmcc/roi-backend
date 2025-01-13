@@ -1,15 +1,8 @@
 import express from 'express';
 import webpush from 'web-push';
-import apn from 'apn';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
-
-// Initialize Supabase
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
 
 // Add a test endpoint
 router.get('/test', (req, res) => {

@@ -1,9 +1,10 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import webpush from 'web-push';
-import dotenv from 'dotenv';
 import notificationRoutes from './routes/notificationRoutes.js';
 import safariRoutes from './routes/safariRoutes.js';
-dotenv.config();
 
 const app = express();
 

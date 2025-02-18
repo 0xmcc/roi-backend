@@ -5,6 +5,7 @@ import express from 'express';
 import webpush from 'web-push';
 import notificationRoutes from './routes/notificationRoutes.js';
 import safariRoutes from './routes/safariRoutes.js';
+import inventoryRoutes from './routes/inventoryRoutes.js';
 
 const app = express();
 
@@ -38,6 +39,8 @@ webpush.setVapidDetails(
 // 5. Mount routes
 app.use('/api/notifications', notificationRoutes);
 app.use('/', safariRoutes);
+app.use('/api/inventory', inventoryRoutes);
+
 // 6. Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
@@ -45,4 +48,5 @@ app.listen(PORT, () => {
   console.log('Available routes:');
   console.log('- GET /test');
   console.log('- POST /send-notification');
+  console.log('- GET /vapid-key');
 }); 

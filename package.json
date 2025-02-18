@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "start": "NODE_ENV=production node src/server.js",
+    "dev": "NODE_ENV=development node src/server.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.47.12",
+    "@supabase/supabase-js": "^2.48.1",
     "apn": "^2.2.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

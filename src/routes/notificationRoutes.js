@@ -10,7 +10,6 @@ router.get('/test', (req, res) => {
 });
 
 router.get('/vapid-key', (req, res) => {
-    console.log('VAPID public key:', process.env.VAPID_PUBLIC_KEY);
     res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
 

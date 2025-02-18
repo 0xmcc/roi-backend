@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 
 // Load environment variables early
 dotenv.config({
-    path: path.join(__dirname, '../../', process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local')
+    path: path.join(__dirname, '../../', process.env.NODE_ENV === 'production' ? '.env.production' : '.env.production')
 });
 
 console.log('NODE_ENV:', process.env.NODE_ENV);

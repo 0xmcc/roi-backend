@@ -23,39 +23,72 @@ export const updateUserInventory = async (req, res) => {
         return res.status(400).json({ error: 'DID parameter is required' });
       }
   
+      // Add debug logging
+      console.log('Updating inventory for DID:', did);
+  
       // Get current user state
       const user = await getUserInventory(did);
-      const now = new Date();
+      console.log('Retrieved user data:', user);
+
+      const now = new Date().getTime();
   
       // Calculate new counts
       const newCounts = calculateNewCounts(user);
+      console.log('New counts calculated:', newCounts);
   
       // Calculate new timers
       const newOffChainBalance = calculateNewOffChainBalance(user);
-      // Update database
-      await updateInventoryInDB(did, {
+      console.log('New off-chain balance:', newOffChainBalance);
+
+      // Log update payload
+      const updatePayload = {
         rock_count: newCounts.rock,
         rock_count_last_update: adjustTimestamp(user.rock_count, 
-                                                user.rock_count_last_update, 
-                                                newCounts.rock, 
-                                                now),
+                                              user.rock_count_last_update, 
+                                              newCounts.rock, 
+                                              now),
         paper_count: newCounts.paper,
-        paper_count_last_update: adjustTimestamp(user.paper_count, user.paper_count_last_update, newCounts.paper, now),
+        paper_count_last_update: adjustTimestamp(user.paper_count, 
+                                               user.paper_count_last_update, 
+                                               newCounts.paper, 
+                                               now),
         scissors_count: newCounts.scissors,
-        scissors_count_last_update: adjustTimestamp(user.scissors_count, user.scissors_count_last_update, newCounts.scissors, now),
+        scissors_count_last_update: adjustTimestamp(user.scissors_count, 
+                                                  user.scissors_count_last_update, 
+                                                  newCounts.scissors, 
+                                                  now),
         off_chain_balance: newOffChainBalance,
-        updated_at: now.toISOString()
-      });
+        off_chain_balance_last_update: adjustTimestamp(user.off_chain_balance, 
+                                                      user.off_chain_balance_last_update, 
+                                                      newOffChainBalance, 
+                                                      now)
+      };
+      console.log('Update payload:', updatePayload);
+
+      // Update database
+      await updateInventoryInDB(did, updatePayload);
   
+      // Calculate next replenish times for response
       return res.status(200).json({
         rock_count: newCounts.rock,
         paper_count: newCounts.paper,
         scissors_count: newCounts.scissors,
-        off_chain_balance: newOffChainBalance
+        off_chain_balance: newOffChainBalance,
+        next_replenish: {
+          rock: calculateNextReplenishTime(newCounts.rock, updatePayload.rock_count_last_update),
+          paper: calculateNextReplenishTime(newCounts.paper, updatePayload.paper_count_last_update),
+          scissors: calculateNextReplenishTime(newCounts.scissors, updatePayload.scissors_count_last_update),
+          off_chain_balance: calculateNextOffChainReplenishTime(newOffChainBalance, updatePayload.off_chain_balance_last_update)
+        }
       });
   
     } catch (error) {
-      console.error('Error updating inventory:', error);
+      // More detailed error logging
+      console.error('Error updating inventory:', {
+        message: error.message,
+        stack: error.stack,
+        did: req.params.did
+      });
       const status = error.message === 'User not found' ? 404 : 500;
       const message = error.message === 'User not found' ? error.message : 'Internal server error';
       return res.status(status).json({ error: message });
@@ -131,16 +164,17 @@ const calculateNewCount = (currentCount, lastUpdate, now) => {
  * @returns {number} - The updated timestamp of the last update in milliseconds since 1970s
  */
 const adjustTimestamp = (currentCount, lastUpdate, newCount, now) => {
-    const currentTime = now.getTime();
-    // Only update timestamp if:
-    // 1. This is the first update (lastUpdate is null)
-    // 2. The resource count actually increased AND enough time passed
-    if (lastUpdate === null ||
-        (newCount > currentCount &&
-        currentTime - lastUpdate >= GAME_CONFIG.REPLENISH_INTERVAL)) {
-        return currentTime;
-    }
-    else return lastUpdate;
+  console.log('Adjusting timestamp:', { currentCount, lastUpdate, newCount, now });
+  if (lastUpdate == null) return now;
+  const currentTime = now
+  // Only update timestamp if:
+  // 1. This is the first update (lastUpdate is null)
+  // 2. The resource count actually increased AND enough time passed
+  if (newCount > currentCount &&
+      currentTime - lastUpdate >= GAME_CONFIG.REPLENISH_INTERVAL) {
+      return currentTime;
+  }
+  else return lastUpdate;
 };
   
 
@@ -166,10 +200,43 @@ const getUserInventory = async (did) => {
 };
 
 const updateInventoryInDB = async (did, updates) => {
+  console.log('Updating inventory in DB:', updates);
   const { error } = await supabase
     .from('users')
     .update(updates)
     .eq('did', did);
 
   if (error) throw new Error('Failed to update inventory');
+};
+
+const calculateNextReplenishTime = (currentCount, lastUpdate) => {
+    // If at max moves, no replenish time needed
+    if (currentCount >= GAME_CONFIG.MAX_MOVES) {
+        return null;
+    }
+    
+    // If no last update, they can replenish immediately
+    if (lastUpdate === null) {
+        return Date.now();
+    }
+    
+    // Calculate next replenish time
+    const nextTime = lastUpdate + GAME_CONFIG.REPLENISH_INTERVAL;
+    return nextTime;
+};
+
+const calculateNextOffChainReplenishTime = (currentBalance, lastUpdate) => {
+    // If balance is positive, no replenish needed
+    if (currentBalance > 0) {
+        return null;
+    }
+    
+    // If no last update, they can replenish immediately
+    if (lastUpdate === null) {
+        return Date.now();
+    }
+    
+    // Calculate next replenish time
+    const nextTime = lastUpdate + GAME_CONFIG.OFF_CHAIN_BALANCE_INTERVAL;
+    return nextTime;
 };

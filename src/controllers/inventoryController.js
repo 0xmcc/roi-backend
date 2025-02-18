@@ -46,22 +46,26 @@ export const updateUserInventory = async (req, res) => {
         rock_count_last_update: adjustTimestamp(user.rock_count, 
                                               user.rock_count_last_update, 
                                               newCounts.rock, 
-                                              now),
+                                              now,
+                                              'rock'),
         paper_count: newCounts.paper,
         paper_count_last_update: adjustTimestamp(user.paper_count, 
                                                user.paper_count_last_update, 
                                                newCounts.paper, 
-                                               now),
+                                               now,
+                                               'paper'),
         scissors_count: newCounts.scissors,
         scissors_count_last_update: adjustTimestamp(user.scissors_count, 
                                                   user.scissors_count_last_update, 
                                                   newCounts.scissors, 
-                                                  now),
+                                                  now,
+                                                  'scissors'),
         off_chain_balance: newOffChainBalance,
         off_chain_balance_last_update: adjustTimestamp(user.off_chain_balance, 
                                                       user.off_chain_balance_last_update, 
                                                       newOffChainBalance, 
-                                                      now)
+                                                      now,
+                                                      'off_chain_balance')
       };
       console.log('Update payload:', updatePayload);
 
@@ -164,8 +168,8 @@ const calculateNewCount = (currentCount, lastUpdate, now) => {
  * @param {Date} now - The current date and time.
  * @returns {number} - The updated timestamp of the last update in milliseconds since 1970s
  */
-const adjustTimestamp = (currentCount, lastUpdate, newCount, now) => {
-  console.log('Adjusting timestamp:', { currentCount, lastUpdate, newCount, now });
+const adjustTimestamp = (currentCount, lastUpdate, newCount, now, item) => {
+  console.log('Adjusting timestamp:', { currentCount, lastUpdate, newCount, now, item });
   if (lastUpdate == null) return now;
   const currentTime = now
   // Only update timestamp if:
@@ -173,6 +177,7 @@ const adjustTimestamp = (currentCount, lastUpdate, newCount, now) => {
   // 2. The resource count actually increased AND enough time passed
   if (newCount > currentCount &&
       currentTime - lastUpdate >= GAME_CONFIG.REPLENISH_INTERVAL) {
+      console.log('Updating timestamp for:', item);
       return currentTime;
   }
   else return lastUpdate;
@@ -191,7 +196,8 @@ const getUserInventory = async (did) => {
       scissors_count,
       rock_count_last_update,
       paper_count_last_update,
-      scissors_count_last_update
+      scissors_count_last_update,
+      off_chain_balance_last_update
     `)
     .eq('did', did)
     .single();

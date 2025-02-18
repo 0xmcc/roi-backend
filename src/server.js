@@ -6,6 +6,7 @@ import webpush from 'web-push';
 import notificationRoutes from './routes/notificationRoutes.js';
 import safariRoutes from './routes/safariRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
+import cors from 'cors';
 
 const app = express();
 
@@ -22,12 +23,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// 3. CORS
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-});
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'https://10.0.0.253:8080',
+    // Add other allowed origins as needed
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+// Apply CORS middleware before other middleware and routes
+app.use(cors(corsOptions));
 
 // 4. VAPID setup
 webpush.setVapidDetails(

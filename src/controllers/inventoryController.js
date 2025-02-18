@@ -70,10 +70,11 @@ export const updateUserInventory = async (req, res) => {
   
       // Calculate next replenish times for response
       return res.status(200).json({
-        rock_count: newCounts.rock,
-        paper_count: newCounts.paper,
-        scissors_count: newCounts.scissors,
-        off_chain_balance: newOffChainBalance,
+        // rock_count: newCounts.rock,
+        // paper_count: newCounts.paper,
+        // scissors_count: newCounts.scissors,
+        // off_chain_balance: newOffChainBalance,
+        success: true,
         next_replenish: {
           rock: calculateNextReplenishTime(newCounts.rock, updatePayload.rock_count_last_update),
           paper: calculateNextReplenishTime(newCounts.paper, updatePayload.paper_count_last_update),

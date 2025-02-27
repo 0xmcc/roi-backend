@@ -29,6 +29,8 @@ const corsOptions = {
     'http://localhost:3000',
     'http://localhost:8080',
     'https://10.0.0.253:8080',
+    'https://10.103.6.64:8080',
+    'https://roi-game.vercel.app',
     // Add other allowed origins as needed
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
